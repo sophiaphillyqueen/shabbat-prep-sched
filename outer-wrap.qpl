@@ -1,0 +1,19 @@
+
+my $versio = "2015-08-29-01";
+
+my $plmodloc;
+my $plscrloc;
+
+$plmodloc = $resloc . "/plmod";
+$plscrloc = $resloc . "/lc_plmod";
+
+if ( ! ( -d $plmodloc ) )
+{
+  my $lc_a;
+  $lc_a = `chobakwrap -rloc`; chomp($lc_a);
+  $lc_a .= "/plmod";
+  $plmodloc = $lc_a;
+}
+
+exec("perl", "-I" . $plscrloc, "-I" . $plmodloc, $resloc . "/inner-wrap.pl",$versio,$resloc,@ARGV);
+
