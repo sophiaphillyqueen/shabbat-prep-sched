@@ -13,6 +13,10 @@ my @rvtaskray;  # Contents of task file - in reverse order
 my $outpot;     # Output content
 my $crhour;     # Current hour in schecule
 my $crmin;      # Current minute in schecule
+my $endhour;     # Current hour in schecule
+my $endmin;      # Current minute in schecule
+
+my @futuremin;  # Array of tasks for after the reference point
 
 
 $filefound = 0;
@@ -53,16 +57,25 @@ if ( $snstfound < 5 ) { die "\nshabbat-prep-sched: FATAL ERROR:\n    Candle ligh
 }
 
 @rvtaskray = reverse @taskray;
+@futuremin = (); # At first, we assume no future tasks:
+
+
+
 $crhour = $snhour;
 $crmin = $snmin;
-{
-  my $lc_a;
-  foreach $lc_a (@rvtaskray)
-  {
-    &goforound($lc_a);
-  }
-}
+{ my $lc_a; foreach $lc_a (@rvtaskray) { &goforound($lc_a); } }
+
+$endhour = $snhour;
+$endmin = $snmin;
+{ my $lc_a; foreach $lc_a(@futuremin) { &futurestep($lc_a); } }
+
+
 print $outpot;
+
+
+# BEGIN FUNCTION SECTION HERE:
+
+
 sub chopfld {
   my $lc_a;
   my $lc_b;
@@ -80,6 +93,12 @@ sub goforound {
   if ( $lc_act eq "" ) { return; }
   
   if ( $lc_act eq "min" ) { &subtra_min($lc_src); return; }
+  
+  if ( $lc_act eq "xmin" )
+  {
+    @futuremin = ( $lc_src, @futuremin );
+    return;
+  }
   
   die("\nshabbat-prep-sched: Unknown line-type: " . $lc_act . ":\n  " . $_[0] . "\n\n");
 }
@@ -125,6 +144,39 @@ sub commendo {
   $lc_line .= $crmin . ": " . $_[0];
   
   $outpot = $lc_line . "\n" . $outpot;
+}
+
+sub ftcommendo {
+  my $lc_line;
+  $lc_line = "";
+  if ( $endhour < 9.5 ) { $lc_line .= " "; }
+  $lc_line .= $endhour . ":";
+  if ( $endmin < 9.5 ) { $lc_line .= "0"; }
+  $lc_line .= $endmin . ": " . $_[0];
+  
+  $outpot = $outpot . $lc_line . "\n";
+}
+
+
+
+sub futurestep {
+  my $lc_src;
+  my $lc_second;
+  
+  $lc_src = $_[0];
+  
+  $lc_second = &chopfld($lc_src);
+  &ftcommendo($lc_src);
+  
+  $endmin = int($endmin + $lc_second + 0.2);
+  while ( $endmin > 59.5 )
+  {
+    $endhour = int($endhour + 1.2);
+    $endmin = int($endmin - 59.8);
+  }
+  
+  while ( $endhour > 12.5 ) { $endhour = int($endhour - 11.8); }
+  return;
 }
 
 
